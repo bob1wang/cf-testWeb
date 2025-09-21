@@ -3,36 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>习题导入与测验工具 V3.0 (多题库版)</title>
+    <title>习题测验工具 V5.0 (简化版)</title>
 
     <meta name="description" content="一个支持多题库管理的在线学习工具，可以从本地JSON文件导入题库进行学习和测验。">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
 
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; }
-        .flip-card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .dark body {
+            background-color: #0b1120;
+        }
+        .flip-card {
+            cursor: pointer;
+        }
+        .flip-card-inner { transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1); transform-style: preserve-3d; }
         .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
         .flip-card-front, .flip-card-back { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
         .flip-card-back { transform: rotateY(180deg); }
-        .code-block { background-color: #f7fafc; border: 1px solid #e2e8f0; padding: 1rem; border-radius: 0.5rem; font-family: monospace; white-space: pre-wrap; font-size: 0.875rem; color: #2d3748; }
-        .dark .code-block { background-color: #1a202c; border-color: #4a5568; color: #cbd5e0; }
+        .card-glow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 0.75rem; /* 12px */
+            background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            z-index: 0;
+        }
+        .dark .card-glow::before {
+            background: radial-gradient(circle at 50% 0%, rgba(96, 165, 250, 0.15), transparent 70%);
+        }
+        .flip-card:hover .card-glow::before {
+            opacity: 1;
+        }
     </style>
 </head>
-<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+<body class="dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
 
 <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
     <header class="text-center mb-8">
-        <h1 id="main-title" class="text-4xl font-bold text-blue-600 dark:text-blue-400">习题测验工具 V3.0</h1>
+        <h1 id="main-title" class="text-4xl font-bold text-blue-600 dark:text-blue-400">习题测验工具 V5.0</h1>
         <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">支持多题库管理，高效学习与自测。</p>
     </header>
 
     <main class="space-y-8">
         <!-- 题库管理 -->
-        <section id="deck-management-section" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+        <section class="bg-white dark:bg-slate-800/50 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
             <h2 class="text-2xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">题库管理</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
                 <div>
@@ -40,8 +66,9 @@
                     <select id="bank-selector" class="w-full p-2 border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 focus:ring-2 focus:ring-blue-500"></select>
                 </div>
                 <div class="flex flex-col sm:flex-row gap-2 mt-4 md:mt-0 md:justify-end">
-                    <button id="import-file-btn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition">
-                        从文件导入
+                    <button id="import-file-btn" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 flex items-center justify-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                        <span>从文件导入</span>
                     </button>
                     <input type="file" id="file-input" class="hidden" accept=".json">
                 </div>
@@ -50,52 +77,51 @@
         </section>
 
         <!-- 学习与测验区域 -->
-        <section id="study-section" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+        <section class="bg-white dark:bg-slate-800/50 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
                 <h2 class="text-2xl font-semibold">开始学习</h2>
-                <div class="flex items-center space-x-3 mt-4 sm:mt-0">
-                    <label for="filter-review-toggle" class="flex items-center cursor-pointer text-sm font-medium">
-                        <input type="checkbox" id="filter-review-toggle" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                        <span class="ml-2 text-slate-700 dark:text-slate-300">仅显示标记</span>
-                    </label>
-                </div>
+                <label for="filter-review-toggle" class="flex items-center cursor-pointer text-sm font-medium mt-4 sm:mt-0">
+                    <input type="checkbox" id="filter-review-toggle" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <span class="ml-2 text-slate-700 dark:text-slate-300">仅显示标记</span>
+                </label>
             </div>
 
-            <div id="card-container" class="min-h-[250px] flex items-center justify-center perspective-1000">
-                <div id="flip-card" class="flip-card w-full h-full">
-                    <div class="flip-card-inner relative w-full h-full">
-                        <div class="flip-card-front absolute w-full h-full bg-slate-50 dark:bg-slate-700 rounded-lg p-6 flex flex-col justify-center items-center">
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">问题</p>
-                            <p id="question-display" class="text-xl md:text-2xl text-center font-semibold"></p>
+            <div id="card-container" class="perspective-1000">
+                <div id="flip-card" class="flip-card w-full relative" style="transition: height 0.3s ease-in-out;">
+                    <div class="flip-card-inner relative w-full h-full card-glow">
+                        <!-- Card Front (Question) -->
+                        <div id="card-front" class="flip-card-front absolute w-full h-full bg-slate-50 dark:bg-slate-800 rounded-xl p-6 flex flex-col justify-center items-center shadow-md border border-slate-200 dark:border-slate-700 min-h-[300px]">
+                            <span class="text-sm font-medium text-blue-500 dark:text-blue-400 mb-4">问题</span>
+                            <p id="question-display" class="text-xl md:text-2xl text-center font-semibold text-slate-800 dark:text-slate-100"></p>
                         </div>
-                        <div class="flip-card-back absolute w-full h-full bg-green-50 dark:bg-green-900/50 rounded-lg p-6 flex flex-col justify-center items-center">
-                            <p class="text-xs text-green-600 dark:text-green-400 mb-2">答案</p>
-                            <p id="answer-display" class="text-xl md:text-2xl text-center font-semibold text-green-800 dark:text-green-200"></p>
+                        <!-- Card Back (Answer) -->
+                        <div id="card-back" class="flip-card-back absolute w-full h-full bg-emerald-50 dark:bg-emerald-900/40 rounded-xl p-6 flex flex-col justify-center items-center shadow-md border border-emerald-200 dark:border-emerald-800 min-h-[300px]">
+                            <span class="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-4">答案</span>
+                            <p id="answer-display" class="text-lg md:text-xl text-center font-normal text-slate-700 dark:text-slate-200 leading-relaxed"></p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="text-center mt-6">
-                <button id="show-answer-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">查看答案</button>
-            </div>
-
-            <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
-                <button id="prev-btn" class="px-5 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-lg transition">&lt; 上一题</button>
+            <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                <button id="prev-btn" class="p-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full transition-all duration-200 ease-in-out transform hover:scale-110" aria-label="上一题">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                </button>
                 <p id="progress-indicator" class="text-sm font-medium text-slate-600 dark:text-slate-400">0 / 0</p>
-                <button id="next-btn" class="px-5 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-lg transition">下一题 &gt;</button>
+                <button id="next-btn" class="p-3 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full transition-all duration-200 ease-in-out transform hover:scale-110" aria-label="下一题">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                </button>
             </div>
             <div class="flex justify-center items-center space-x-4 mt-4">
-                <button id="mark-review-btn" class="px-5 py-2 text-sm bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 rounded-lg transition">⭐ 标记复习</button>
-                <button id="random-btn" class="px-5 py-2 text-sm bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800/60 rounded-lg transition">随机一题</button>
+                <button id="mark-review-btn" class="px-5 py-2 text-sm bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800/60 rounded-lg transition-all duration-200 ease-in-out">⭐ 标记复习</button>
+                <button id="random-btn" class="px-5 py-2 text-sm bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800/60 rounded-lg transition-all duration-200 ease-in-out">随机一题</button>
             </div>
         </section>
 
-        <!-- 粘贴导入区域 -->
-        <section id="import-section" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">或粘贴内容以追加题库</h2>
-            <textarea id="data-input" rows="8" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition font-mono text-sm" placeholder="在此处粘贴您的JSON格式题库..."></textarea>
-            <button id="import-text-btn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition">追加为新题库</button>
+        <section class="bg-white dark:bg-slate-800/50 p-6 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700">
+            <h2 class="text-2xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">粘贴内容以追加题库</h2>
+            <textarea id="data-input" rows="8" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+            <button id="import-text-btn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105">追加为新题库</button>
             <p id="import-status" class="text-sm mt-2 h-5"></p>
         </section>
     </main>
@@ -112,15 +138,15 @@
         const importTextBtn = document.getElementById('import-text-btn');
         const importStatus = document.getElementById('import-status');
         const localLoadStatus = document.getElementById('local-load-status');
-        const studySection = document.getElementById('study-section');
         const questionDisplay = document.getElementById('question-display');
         const answerDisplay = document.getElementById('answer-display');
         const progressIndicator = document.getElementById('progress-indicator');
         const prevBtn = document.getElementById('prev-btn');
         const nextBtn = document.getElementById('next-btn');
         const randomBtn = document.getElementById('random-btn');
-        const showAnswerBtn = document.getElementById('show-answer-btn');
         const flipCard = document.getElementById('flip-card');
+        const cardFront = document.getElementById('card-front');
+        const cardBack = document.getElementById('card-back');
         const markReviewBtn = document.getElementById('mark-review-btn');
         const filterReviewToggle = document.getElementById('filter-review-toggle');
 
@@ -130,13 +156,32 @@
         let displayedQuestions = [];
         let currentIndex = 0;
 
+        // --- Adjust Card Height Function ---
+        function adjustCardHeight() {
+            if (!flipCard.isConnected) return; // Prevent errors if element is gone
+
+            requestAnimationFrame(() => {
+                if (displayedQuestions.length === 0) {
+                    flipCard.style.height = '300px';
+                    return;
+                }
+
+                const frontHeight = cardFront.scrollHeight;
+                const backHeight = cardBack.scrollHeight;
+
+                const newHeight = Math.max(frontHeight, backHeight, 300); // Minimum height of 300px
+
+                flipCard.style.height = `${newHeight}px`;
+            });
+        }
+
         // --- Core Functions ---
         function addBank(name, questions) {
-            if (!Array.isArray(questions) || questions.some(q => typeof q.question === 'undefined' || typeof q.answer === 'undefined')) {
+            if (!Array.isArray(questions) || (questions.length > 0 && questions.some(q => typeof q.question === 'undefined' || typeof q.answer === 'undefined'))) {
                 showStatus(`题库 "${name}" 格式错误，已跳过。`, 'error');
                 return false;
             }
-            const cleanName = name.replace('.json', '');
+            const cleanName = name.replace(/\.json$/i, '');
             questionBanks[cleanName] = questions.map(q => ({ ...q, review: false }));
             updateBankSelector();
             setActiveBank(cleanName);
@@ -153,11 +198,20 @@
 
         function updateBankSelector() {
             bankSelector.innerHTML = '';
-            for (const name in questionBanks) {
+            const names = Object.keys(questionBanks);
+            if(names.length === 0) {
                 const option = document.createElement('option');
-                option.value = name;
-                option.textContent = `${name} (${questionBanks[name].length}题)`;
+                option.textContent = "请先导入题库";
                 bankSelector.appendChild(option);
+                bankSelector.disabled = true;
+            } else {
+                bankSelector.disabled = false;
+                names.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = `${name} (${questionBanks[name].length}题)`;
+                    bankSelector.appendChild(option);
+                });
             }
             bankSelector.value = activeBankName;
         }
@@ -167,34 +221,54 @@
                 displayedQuestions = [];
             } else {
                 const bank = questionBanks[activeBankName];
-                displayedQuestions = filterReviewToggle.checked ? bank.filter(q => q.review) : bank;
+                displayedQuestions = filterReviewToggle.checked ? bank.filter(q => q.review) : [...bank];
             }
             currentIndex = 0;
             displayQuestion();
         }
 
+        function formatAnswer(text) {
+            if (!text) return '';
+            const regex = /(（\d+）|\(\d+\)|\d+\.\s?)/g;
+            return text.replace(regex, (match, _, offset) => {
+                return offset === 0 ? match : `<br>${match}`;
+            });
+        }
+
         function displayQuestion() {
             flipCard.classList.remove('flipped');
-            showAnswerBtn.textContent = '查看答案';
 
             if (displayedQuestions.length === 0) {
                 let msg = '请先导入或选择一个题库。';
                 if (activeBankName) {
-                    msg = filterReviewToggle.checked ? '没有标记为复习的题目。' : '该题库为空。';
+                    msg = filterReviewToggle.checked ? '没有标记为复习的题目。' : '该题库为空或未选择。';
                 }
-                questionDisplay.textContent = msg;
-                answerDisplay.textContent = '...';
+                cardFront.innerHTML = `<div class="text-center text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="mx-auto mb-4 opacity-50"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <p>${msg}</p>
+                </div>`;
+                questionDisplay.textContent = '';
+                answerDisplay.innerHTML = '';
                 progressIndicator.textContent = '0 / 0';
                 markReviewBtn.disabled = true;
+                adjustCardHeight(); // Adjust for empty state
                 return;
+            }
+
+            if (!document.getElementById('question-display')) {
+                cardFront.innerHTML = `<span class="text-sm font-medium text-blue-500 dark:text-blue-400 mb-4">问题</span>
+                                     <p id="question-display" class="text-xl md:text-2xl text-center font-semibold text-slate-800 dark:text-slate-100"></p>`;
             }
 
             markReviewBtn.disabled = false;
             const card = displayedQuestions[currentIndex];
-            questionDisplay.textContent = card.question;
-            answerDisplay.textContent = card.answer;
+            const qDisplay = document.getElementById('question-display');
+            if(qDisplay) qDisplay.textContent = card.question;
+            answerDisplay.innerHTML = formatAnswer(card.answer);
             progressIndicator.textContent = `${currentIndex + 1} / ${displayedQuestions.length}`;
             updateMarkButtonUI();
+
+            setTimeout(adjustCardHeight, 50);
         }
 
         function updateMarkButtonUI() {
@@ -202,10 +276,12 @@
             const card = displayedQuestions[currentIndex];
             if (card.review) {
                 markReviewBtn.textContent = '⭐ 取消标记';
-                markReviewBtn.classList.replace('bg-amber-100', 'bg-amber-300');
+                markReviewBtn.classList.add('bg-amber-300', 'dark:bg-amber-600');
+                markReviewBtn.classList.remove('bg-amber-100', 'dark:bg-amber-900/50');
             } else {
                 markReviewBtn.textContent = '⭐ 标记复习';
-                markReviewBtn.classList.replace('bg-amber-300', 'bg-amber-100');
+                markReviewBtn.classList.remove('bg-amber-300', 'dark:bg-amber-600');
+                markReviewBtn.classList.add('bg-amber-100', 'dark:bg-amber-900/50');
             }
         }
 
@@ -218,32 +294,25 @@
 
         // --- Event Listeners ---
         importFileBtn.addEventListener('click', () => fileInput.click());
-
         fileInput.addEventListener('change', (event) => {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const questions = JSON.parse(e.target.result);
                     if (addBank(file.name, questions)) {
-                        showStatus(`成功导入题库 "${file.name}"`, 'success');
+                        showStatus(`成功导入题库 "${file.name.replace(/\.json$/i, '')}"`, 'success');
                     }
-                } catch (err) {
-                    showStatus(`导入失败: ${err.message}`, 'error');
-                }
+                } catch (err) { showStatus(`导入失败: ${err.message}`, 'error'); }
             };
             reader.readAsText(file);
-            fileInput.value = ''; // Reset for next import
+            fileInput.value = '';
         });
 
         importTextBtn.addEventListener('click', () => {
             const rawData = dataInput.value.trim();
-            if (!rawData) {
-                showStatus('文本框内容为空！', 'error');
-                return;
-            }
+            if (!rawData) { showStatus('文本框内容为空！', 'error'); return; }
             try {
                 const questions = JSON.parse(rawData);
                 const bankName = `粘贴题库_${new Date().toLocaleTimeString()}`;
@@ -251,9 +320,7 @@
                     dataInput.value = '';
                     showStatus(`成功添加 "${bankName}"`, 'success');
                 }
-            } catch (err) {
-                showStatus(`解析失败: ${err.message}`, 'error');
-            }
+            } catch (err) { showStatus(`解析失败: ${err.message}`, 'error'); }
         });
 
         bankSelector.addEventListener('change', (e) => setActiveBank(e.target.value));
@@ -261,52 +328,52 @@
 
         markReviewBtn.addEventListener('click', () => {
             if (displayedQuestions.length === 0) return;
-            const card = displayedQuestions[currentIndex];
-            card.review = !card.review;
+            const originalIndex = questionBanks[activeBankName].findIndex(q => q.question === displayedQuestions[currentIndex].question);
+            if(originalIndex > -1) {
+                questionBanks[activeBankName][originalIndex].review = !questionBanks[activeBankName][originalIndex].review;
+            }
             updateMarkButtonUI();
-            if (filterReviewToggle.checked && !card.review) {
-                updateDisplayedQuestions();
+            if (filterReviewToggle.checked && !displayedQuestions[currentIndex].review) {
+                setTimeout(() => updateDisplayedQuestions(), 200);
             }
         });
 
-        nextBtn.addEventListener('click', () => {
+        const navigate = (direction) => {
             if (displayedQuestions.length === 0) return;
-            currentIndex = (currentIndex + 1) % displayedQuestions.length;
+            currentIndex = (currentIndex + direction + displayedQuestions.length) % displayedQuestions.length;
             displayQuestion();
-        });
+        };
 
-        prevBtn.addEventListener('click', () => {
-            if (displayedQuestions.length === 0) return;
-            currentIndex = (currentIndex - 1 + displayedQuestions.length) % displayedQuestions.length;
-            displayQuestion();
-        });
-
+        nextBtn.addEventListener('click', () => navigate(1));
+        prevBtn.addEventListener('click', () => navigate(-1));
         randomBtn.addEventListener('click', () => {
             if (displayedQuestions.length <= 1) return;
             let newIndex;
-            do {
-                newIndex = Math.floor(Math.random() * displayedQuestions.length);
-            } while (newIndex === currentIndex);
+            do { newIndex = Math.floor(Math.random() * displayedQuestions.length); } while (newIndex === currentIndex);
             currentIndex = newIndex;
             displayQuestion();
         });
 
-        showAnswerBtn.addEventListener('click', () => {
-            flipCard.classList.toggle('flipped');
-            showAnswerBtn.textContent = flipCard.classList.contains('flipped') ? '隐藏答案' : '查看答案';
+        flipCard.addEventListener('click', () => {
+            if (displayedQuestions.length > 0) {
+                flipCard.classList.toggle('flipped');
+            }
         });
 
-        // --- Initialization ---
+        window.addEventListener('resize', adjustCardHeight);
+
         async function initialize() {
             try {
                 const response = await fetch('default-questions.json');
                 if (!response.ok) throw new Error('网络响应不佳');
                 const questions = await response.json();
                 addBank('default-questions', questions);
-                localLoadStatus.textContent = 'ⓘ 已成功加载本地默认题库。您可将其他 .json 文件置于同目录下并刷新页面进行加载(需本地服务器环境)。';
+                localLoadStatus.textContent = 'ⓘ 已成功加载本地默认题库。';
             } catch (error) {
                 console.warn('无法加载本地默认题库:', error);
-                localLoadStatus.textContent = 'ⓘ 未找到本地默认题库 (default-questions.json)。请通过上方按钮导入。';
+                localLoadStatus.textContent = 'ⓘ 未找到本地默认题库 (default-questions.json)，请通过上方按钮导入。';
+            } finally {
+                updateBankSelector();
                 displayQuestion();
             }
         }
