@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>习题导入与测验工具</title>
+    
+    <!-- SEO and Social Sharing Meta Tags -->
+    <meta name="description" content="一个简单高效的在线学习工具，可以导入您的题库，并通过背诵和测验模式进行学习。">
+    <meta name="keywords" content="学习工具, 抽认卡, 记忆卡片, 在线学习, 题库, 测验, study tool, flashcards">
+    <meta property="og:title" content="习题导入与测验工具">
+    <meta property="og:description" content="一个简单高效的在线学习工具，可以导入您的题库，并通过背誦和测验模式进行学习。">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicon (using an emoji) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        /* 自定义过渡效果 */
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.3s ease;
+        }
+        .fade-enter-from, .fade-leave-to {
+            opacity: 0;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300">
+
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-blue-600 dark:text-blue-400">习题导入与测验工具</h1>
+            <p class="mt-2 text-lg text-slate-600 dark:text-slate-400">导入您的题库，开始高效学习与自测。</p>
+        </header>
+
+        <main class="space-y-8">
+            <!-- 导入区域 -->
+            <section id="import-section" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
+                <h2 class="text-2xl font-semibold mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">1. 导入题库</h2>
+                <div class="mb-4 p-4 bg-blue-50 dark:bg-slate-700/50 border border-blue-200 dark:border-slate-600 rounded-lg">
+                    <h3 class="font-semibold text-blue-800 dark:text-blue-300">格式说明：</h3>
+                    <ul class="list-disc list-inside mt-2 text-sm text-slate-700 dark:text-slate-300">
+                        <li>每道题占一行。</li>
+                        <li>问题和答案之间使用三个at符号 <code class="bg-slate-200 dark:bg-slate-600 px-1 py-0.5 rounded">@@@</code> 分隔。</li>
+                        <li class="mt-1">示例：<code class="block bg-slate-200 dark:bg-slate-600 p-2 mt-1 rounded text-xs">中国的首都是哪里？@@@北京</code></li>
+                    </ul>
+                </div>
+                <textarea id="data-input" rows="8" class="w-full p-3 border border-slate-300 dark:border-slate-600 rounded-lg bg-slate-50 dark:bg-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="请在此处粘贴您的题库..."></textarea>
+                <button id="import-btn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800">
+                    导入并开始学习
+                </button>
+                <p id="import-status" class="text-sm text-green-600 dark:text-green-400 mt-2 h-5"></p>
+            </section>
+
+            <!-- 学习与测验区域 -->
+            <section id="study-section" class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b border-slate-200 dark:border-slate-700 pb-4">
+                    <h2 class="text-2xl font-semibold mb-2 sm:mb-0">2. 开始学习</h2>
+                    <div class="flex space-x-2">
+                        <button id="study-mode-btn" class="px-4 py-2 text-sm font-medium rounded-md transition">背诵模式</button>
+                        <button id="test-mode-btn" class="px-4 py-2 text-sm font-medium rounded-md transition">测验模式</button>
+                    </div>
+                </div>
+
+                <div id="card-container" class="min-h-[250px] flex items-center justify-center perspective-1000">
+                    <!-- 翻转卡片结构 -->
+                    <div id="flip-card" class="flip-card w-full h-full">
+                        <div class="flip-card-inner relative w-full h-full">
+                             <!-- 卡片正面 (问题) -->
+                            <div class="flip-card-front absolute w-full h-full bg-slate-50 dark:bg-slate-700 rounded-lg p-6 flex flex-col justify-center items-center">
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">问题</p>
+                                <p id="question-display" class="text-xl md:text-2xl text-center font-semibold"></p>
+                            </div>
+                             <!-- 卡片背面 (答案) -->
+                            <div class="flip-card-back absolute w-full h-full bg-green-50 dark:bg-green-900/50 rounded-lg p-6 flex flex-col justify-center items-center">
+                                <p class="text-xs text-green-600 dark:text-green-400 mb-2">答案</p>
+                                <p id="answer-display" class="text-xl md:text-2xl text-center font-semibold text-green-800 dark:text-green-200"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- 测试模式下的操作按钮 -->
+                <div id="test-controls" class="text-center mt-6">
+                     <button id="show-answer-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">
+                        显示答案
+                    </button>
+                </div>
+                
+                <!-- 导航 -->
+                <div class="flex justify-between items-center mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <button id="prev-btn" class="px-5 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-lg transition">&lt; 上一题</button>
+                    <p id="progress-indicator" class="text-sm font-medium text-slate-600 dark:text-slate-400">0 / 0</p>
+                    <button id="next-btn" class="px-5 py-2 bg-slate-200 dark:bg-slate-600 hover:bg-slate-300 dark:hover:bg-slate-500 rounded-lg transition">下一题 &gt;</button>
+                </div>
+                <div class="text-center mt-4">
+                    <button id="random-btn" class="px-5 py-2 text-sm bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800/60 rounded-lg transition">随机一题</button>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // DOM 元素获取
+            const dataInput = document.getElementById('data-input');
+            const importBtn = document.getElementById('import-btn');
+            const importStatus = document.getElementById('import-status');
+            const studySection = document.getElementById('study-section');
+            const questionDisplay = document.getElementById('question-display');
+            const answerDisplay = document.getElementById('answer-display');
+            const progressIndicator = document.getElementById('progress-indicator');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const randomBtn = document.getElementById('random-btn');
+            const studyModeBtn = document.getElementById('study-mode-btn');
+            const testModeBtn = document.getElementById('test-mode-btn');
+            const showAnswerBtn = document.getElementById('show-answer-btn');
+            const testControls = document.getElementById('test-controls');
+            const flipCard = document.getElementById('flip-card');
+
+            // 应用状态
+            let questions = [];
+            let currentIndex = 0;
+            let currentMode = 'study'; // 'study' or 'test'
+
+            // --- 核心功能函数 ---
+
+            /**
+             * 渲染当前题目
+             */
+            function displayQuestion() {
+                if (questions.length === 0) {
+                    studySection.classList.add('hidden');
+                    return;
+                }
+                
+                studySection.classList.remove('hidden');
+                
+                const card = questions[currentIndex];
+                questionDisplay.textContent = card.question;
+                answerDisplay.textContent = card.answer;
+                progressIndicator.textContent = `${currentIndex + 1} / ${questions.length}`;
+                
+                updateModeUI();
+            }
+
+            /**
+             * 根据当前模式更新UI
+             */
+            function updateModeUI() {
+                // 重置卡片翻转状态
+                flipCard.classList.remove('flipped');
+                showAnswerBtn.textContent = '显示答案';
+
+                if (currentMode === 'study') {
+                    // 背诵模式
+                    studyModeBtn.classList.add('bg-blue-500', 'text-white');
+                    studyModeBtn.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                    testModeBtn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                    testModeBtn.classList.remove('bg-blue-500', 'text-white');
+                    testControls.classList.add('hidden');
+                    // 自动翻转显示答案
+                    setTimeout(() => flipCard.classList.add('flipped'), 100);
+                } else {
+                    // 测验模式
+                    testModeBtn.classList.add('bg-blue-500', 'text-white');
+                    testModeBtn.classList.remove('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                    studyModeBtn.classList.add('bg-slate-200', 'dark:bg-slate-700', 'text-slate-700', 'dark:text-slate-300');
+                    studyModeBtn.classList.remove('bg-blue-500', 'text-white');
+                    testControls.classList.remove('hidden');
+                }
+            }
+            
+            /**
+             * 切换模式
+             */
+            function setMode(mode) {
+                currentMode = mode;
+                displayQuestion();
+            }
+
+            /**
+             * 处理数据导入
+             */
+            function handleImport() {
+                const rawData = dataInput.value.trim();
+                if (!rawData) {
+                    showStatus('请输入内容后再导入！', 'error');
+                    return;
+                }
+
+                const lines = rawData.split('\n').filter(line => line.trim() !== '');
+                
+                const parsedQuestions = lines.map(line => {
+                    const parts = line.split('@@@');
+                    if (parts.length === 2) {
+                        return { question: parts[0].trim(), answer: parts[1].trim() };
+                    }
+                    return null;
+                }).filter(Boolean); // 过滤掉格式不正确的行
+
+                if (parsedQuestions.length === 0) {
+                    showStatus('未找到有效格式的题目，请检查！', 'error');
+                    return;
+                }
+                
+                questions = parsedQuestions;
+                currentIndex = 0;
+                
+                // 保存到 localStorage
+                localStorage.setItem('studyToolData', rawData);
+
+                showStatus(`成功导入 ${questions.length} 道题目！`, 'success');
+                displayQuestion();
+            }
+            
+            function showStatus(message, type = 'success') {
+                importStatus.textContent = message;
+                importStatus.className = `text-sm mt-2 h-5 ${type === 'success' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`;
+                setTimeout(() => {
+                    importStatus.textContent = '';
+                }, 3000);
+            }
+
+            // --- 事件监听器 ---
+
+            importBtn.addEventListener('click', handleImport);
+
+            nextBtn.addEventListener('click', () => {
+                if (questions.length === 0) return;
+                currentIndex = (currentIndex + 1) % questions.length;
+                displayQuestion();
+            });
+
+            prevBtn.addEventListener('click', () => {
+                if (questions.length === 0) return;
+                currentIndex = (currentIndex - 1 + questions.length) % questions.length;
+                displayQuestion();
+            });
+            
+            randomBtn.addEventListener('click', () => {
+                if (questions.length === 0) return;
+                let newIndex;
+                do {
+                    newIndex = Math.floor(Math.random() * questions.length);
+                } while (questions.length > 1 && newIndex === currentIndex);
+                currentIndex = newIndex;
+                displayQuestion();
+            });
+
+            studyModeBtn.addEventListener('click', () => setMode('study'));
+            testModeBtn.addEventListener('click', () => setMode('test'));
+
+            showAnswerBtn.addEventListener('click', () => {
+                flipCard.classList.toggle('flipped');
+                if (flipCard.classList.contains('flipped')) {
+                    showAnswerBtn.textContent = '隐藏答案';
+                } else {
+                    showAnswerBtn.textContent = '显示答案';
+                }
+            });
+
+            // --- 初始化 ---
+            
+            function initialize() {
+                const savedData = localStorage.getItem('studyToolData');
+                if (savedData) {
+                    dataInput.value = savedData;
+                    handleImport();
+                } else {
+                    // 提供一些默认的示例数据
+                    dataInput.value = `什么是HTML？@@@超文本标记语言 (HyperText Markup Language)\nJavaScript是一种什么类型的语言？@@@一种高级、解释型、即时编译的编程语言\nCSS代表什么？@@@层叠样式表 (Cascading Style Sheets)`;
+                    handleImport();
+                }
+                 // 默认进入背诵模式
+                setMode('study');
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
+
